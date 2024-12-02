@@ -16,6 +16,8 @@ export const generateQRCode = async (req: Request, res: Response) => {
       `https://yourapp.com/t/${qrCodeInstance.uniqueIdentifier}`
     );
 
+
+
     await qrCodeInstance.save();
 
     res.json({
@@ -49,3 +51,14 @@ export const trackQRCodeScan = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Tracking error' });
   }
 };
+
+// src/controllers/qrController.ts
+export const getQRCode = async (req: Request, res: Response) => {
+    try {
+      const qrCode = await QRCode.findOne({ uniqueIdentifier: req.params.id });
+      if (!qrCode) return res.status(404).json({ message: 'QR code not found' });
+      res.json(qrCode);
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching QR code' });
+    }
+  };
