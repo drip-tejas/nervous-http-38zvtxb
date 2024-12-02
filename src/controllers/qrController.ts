@@ -2,14 +2,24 @@ import { Request, Response } from "express";
 import QRCode from "../models/QRCode";
 import qrcode from "qrcode";
 
+const generateSampleScans = () => {
+  const scans = Array.from({ length: 50 }, () => ({
+    timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+    ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
+    deviceInfo: ["Mobile", "Desktop", "Tablet"][Math.floor(Math.random() * 3)],
+  }));
+  return scans;
+};
+
 export const generateQRCode = async (req: Request, res: Response) => {
   try {
     const { targetUrl } = req.body;
-    const userId = "660a1b3f4c3d1c001f3e4d5e"; // Placeholder user ID
+    const userId = "660a1b3f4c3d1c001f3e4d5e";
 
     const qrCodeInstance = new QRCode({
       user: userId,
       targetUrl,
+      scans: generateSampleScans(), // Add sample scans
     });
 
     const qrCodeDataUrl = await qrcode.toDataURL(
@@ -61,7 +71,6 @@ export const getQRCode = async (req: Request, res: Response) => {
   }
 };
 
-// src/controllers/qrController.ts
 export const scanQRCode = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -81,5 +90,25 @@ export const scanQRCode = async (req: Request, res: Response) => {
     res.redirect(qrCode.targetUrl);
   } catch (error) {
     res.status(500).json({ message: "Scan tracking failed" });
+  }
+};
+
+export const addTestScans = async (req: Request, res: Response) => {
+  try {
+    const qrCode = await QRCode.findOne({ uniqueIdentifier: req.params.id });
+    if (!qrCode) return res.status(404).json({ message: "QR code not found" });
+
+    qrCode.scans = Array.from({ length: 50 }, () => ({
+      timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+      ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
+      deviceInfo: ["Mobile", "Desktop", "Tablet"][
+        Math.floor(Math.random() * 3)
+      ],
+    }));
+
+    await qrCode.save();
+    res.json({ message: "Test scans added" });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding test scans" });
   }
 };
