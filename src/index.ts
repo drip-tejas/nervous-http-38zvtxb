@@ -35,7 +35,7 @@ app.get("/test", async (req, res) => {
   }
 });
 
-app.use("/api/qr", qrRoutes);
+app.use("/api", qrRoutes);
 app.use("/api/analytics", qrRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
