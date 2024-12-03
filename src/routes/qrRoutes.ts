@@ -1,29 +1,26 @@
 // src/routes/qrRoutes.ts
-
 import express from "express";
 import {
   generateQRCode,
-  trackQRCodeScan,
+  redirectAndTrackScan,
   getQRCode,
-  scanQRCode,
+  updateQRCodeUrl,
   listQRCodes,
+  addTestScans,
 } from "../controllers/qrController";
-import {
-  getQRCodeAnalytics,
-  getGlobalAnalytics,
-} from "../controllers/analyticsController";
 
 const router = express.Router();
 
-// Analytics routes - put these FIRST
-router.get("/analytics/global", getGlobalAnalytics);
-router.get("/analytics/:id", getQRCodeAnalytics);
-
-// QR code routes
+// QR Code management
+router.post("/qr/generate", generateQRCode);
 router.get("/qr/list", listQRCodes);
-router.post("/generate", generateQRCode);
-router.get("/track/:identifier", trackQRCodeScan);
-router.get("/scan/:id", scanQRCode);
-router.get("/:id", getQRCode); // Keep this generic route last
+router.get("/qr/:id", getQRCode);
+router.put("/qr/:id/url", updateQRCodeUrl);
+
+// Redirect and tracking
+router.get("/qr/redirect/:id", redirectAndTrackScan);
+
+// Test routes - Remove in production
+router.post("/qr/test-scans/:id", addTestScans);
 
 export default router;
