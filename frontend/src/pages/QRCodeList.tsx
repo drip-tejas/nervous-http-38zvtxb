@@ -1,12 +1,19 @@
+// /frontend/src/pages/QRCodeList.tsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "../utils/axios";
 
 interface QRCode {
-  id: string;
-  title: string;
-  url: string;
-  scanCount: number;
+  uniqueIdentifier: string;
+  targetUrl: string;
+  currentUrl: string;
+  customIdentifier?: string;
   createdAt: string;
+  scans: Array<{
+    timestamp: Date;
+    ipAddress?: string;
+    deviceInfo?: string;
+  }>;
 }
 
 const QRCodeList = () => {
@@ -17,18 +24,10 @@ const QRCodeList = () => {
   useEffect(() => {
     const fetchCodes = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/qr/list", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch QR codes");
-
-        const data = await response.json();
-        setCodes(data);
-      } catch (err) {
-        setError("Failed to load QR codes");
+        const response = await axios.get("/api/qr/list");
+        setCodes(response.data.data);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load QR codes");
       } finally {
         setLoading(false);
       }
@@ -58,10 +57,10 @@ const QRCodeList = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Title
+                Identifier
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                URL
+                Target URL
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Scans
@@ -73,18 +72,20 @@ const QRCodeList = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {codes.map((code) => (
-              <tr key={code.id} className="hover:bg-gray-50">
+              <tr key={code.uniqueIdentifier} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <Link
-                    to={`/qr/${code.id}`}
+                    to={`/qr/${code.uniqueIdentifier}`}
                     className="text-blue-600 hover:underline"
                   >
-                    {code.title}
+                    {code.customIdentifier || code.uniqueIdentifier}
                   </Link>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{code.url}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {code.scanCount}
+                  {code.targetUrl}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {code.scans.length}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {new Date(code.createdAt).toLocaleDateString()}

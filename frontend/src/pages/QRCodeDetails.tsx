@@ -1,17 +1,27 @@
+// /frontend/src/pages/QRCodeDetails.tsx
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import axios from "../utils/axios";
 
 interface QRDetails {
-  id: string;
-  title: string;
-  url: string;
-  scanCount: number;
+  uniqueIdentifier: string;
+  targetUrl: string;
+  currentUrl: string;
+  customIdentifier?: string;
   createdAt: string;
-  scans: {
-    timestamp: string;
-    ipAddress: string;
-    device: string;
-  }[];
+  urlHistory: Array<{
+    url: string;
+    changedAt: Date;
+  }>;
+  scans: Array<{
+    timestamp: Date;
+    ipAddress?: string;
+    deviceInfo?: string;
+    location?: {
+      country?: string;
+      city?: string;
+    };
+  }>;
 }
 
 const QRCodeDetails = () => {
@@ -19,22 +29,18 @@ const QRCodeDetails = () => {
   const [details, setDetails] = useState<QRDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [newUrl, setNewUrl] = useState("");
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/qr/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch QR code details");
-
-        const data = await response.json();
-        setDetails(data);
-      } catch (err) {
-        setError("Failed to load QR code details");
+        const response = await axios.get(`/api/qr/${id}`);
+        setDetails(response.data.data);
+        setNewUrl(response.data.data.currentUrl);
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message || "Failed to load QR code details"
+        );
       } finally {
         setLoading(false);
       }
@@ -42,6 +48,17 @@ const QRCodeDetails = () => {
 
     fetchDetails();
   }, [id]);
+
+  const handleUrlUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.put(`/api/qr/${id}/url`, { newUrl });
+      const response = await axios.get(`/api/qr/${id}`);
+      setDetails(response.data.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update URL");
+    }
+  };
 
   if (loading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
@@ -51,24 +68,73 @@ const QRCodeDetails = () => {
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-4">{details.title}</h1>
+        <h1 className="text-2xl font-bold mb-4">
+          {details.customIdentifier || details.uniqueIdentifier}
+        </h1>
+
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Update URL</h2>
+          <form onSubmit={handleUrlUpdate} className="flex gap-4">
+            <input
+              type="url"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              className="flex-1 p-2 border rounded"
+              required
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Update
+            </button>
+          </form>
+        </div>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div>
-            <p className="text-gray-600">Destination URL</p>
+            <p className="text-gray-600">Current URL</p>
             <a
-              href={details.url}
+              href={details.currentUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
             >
-              {details.url}
+              {details.currentUrl}
             </a>
           </div>
           <div>
             <p className="text-gray-600">Total Scans</p>
-            <p className="text-xl font-semibold">{details.scanCount}</p>
+            <p className="text-xl font-semibold">{details.scans.length}</p>
           </div>
+        </div>
+
+        <h2 className="text-xl font-semibold mb-4">URL History</h2>
+        <div className="mb-8 overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  URL
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Changed At
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {details.urlHistory.map((history, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {history.url}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {new Date(history.changedAt).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         <h2 className="text-xl font-semibold mb-4">Scan History</h2>
@@ -85,6 +151,9 @@ const QRCodeDetails = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Device
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Location
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -94,17 +163,22 @@ const QRCodeDetails = () => {
                     {new Date(scan.timestamp).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {scan.ipAddress}
+                    {scan.ipAddress || "Unknown"}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {scan.device}
+                    {scan.deviceInfo || "Unknown"}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {scan.location?.country
+                      ? `${scan.location.city || ""}, ${scan.location.country}`
+                      : "Unknown"}
                   </td>
                 </tr>
               ))}
               {details.scans.length === 0 && (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No scans yet
