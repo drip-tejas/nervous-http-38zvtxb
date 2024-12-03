@@ -5,6 +5,8 @@ import bodyParser from "body-parser";
 import qrRoutes from "./routes/qrRoutes";
 import dotenv from "dotenv";
 
+mongoose.set("strictQuery", true);
+
 dotenv.config();
 
 const app = express();

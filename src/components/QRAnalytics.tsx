@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+// src/components/QRAnalytics.tsx
+
+import React, { useState, useEffect, ReactNode } from "react";
 import {
   AreaChart,
   Area,
@@ -15,48 +17,55 @@ import {
 } from "recharts";
 import { Clock, Users, Scan, Activity } from "lucide-react";
 
-const Card = ({ children, className = "" }) => (
+interface CardProps {
+  children: ReactNode;
+  className?: string;
+}
+
+const Card: React.FC<CardProps> = ({ children, className = "" }) => (
   <div className={`bg-white rounded-lg shadow p-4 ${className}`}>
     {children}
   </div>
 );
 
-const QRAnalytics = ({ id }) => {
-  const [analytics, setAnalytics] = useState(null);
-  const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
+interface Analytics {
+  totalScans: number;
+  uniqueVisitors: number;
+  daysActive: number;
+  scansPerDay: string;
+  lastScan: string | null;
+  deviceStats: Array<{ name: string; value: number }>;
+  hourlyStats: Array<{ hour: string; scans: number }>;
+  dailyStats: Array<{ date: string; scans: number }>;
+}
+
+interface Props {
+  id: string;
+}
+
+const QRAnalytics: React.FC<Props> = ({ id }) => {
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const COLORS = ["#3b82f6", "#8b5cf6", "#10b981"];
 
   useEffect(() => {
     fetchAnalytics();
   }, [id]);
 
   const fetchAnalytics = async () => {
-    const res = await fetch(`/api/analytics/${id}`);
-    const data = await res.json();
-    setAnalytics(data);
+    try {
+      const res = await fetch(`/api/analytics/${id}`);
+      const data = await res.json();
+      setAnalytics(data);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!analytics) return <div>Loading...</div>;
-
-  const formatDailyStats = Object.entries(analytics.dailyStats).map(
-    ([date, scans]) => ({
-      date,
-      scans,
-    })
-  );
-
-  const formatHourlyStats = Object.entries(analytics.hourlyDistribution).map(
-    ([hour, scans]) => ({
-      hour: `${hour}:00`,
-      scans,
-    })
-  );
-
-  const deviceData = Object.entries(analytics.deviceBreakdown).map(
-    ([device, count]) => ({
-      name: device,
-      value: count,
-    })
-  );
+  if (loading) return <div className="p-6">Loading analytics...</div>;
+  if (!analytics) return <div className="p-6">No analytics data available</div>;
 
   return (
     <div className="p-6 space-y-6">
@@ -99,7 +108,7 @@ const QRAnalytics = ({ id }) => {
           <h3 className="font-semibold mb-4">Daily Scans</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={formatDailyStats}>
+              <AreaChart data={analytics.dailyStats}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
@@ -121,7 +130,7 @@ const QRAnalytics = ({ id }) => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={deviceData}
+                  data={analytics.deviceStats}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -129,7 +138,7 @@ const QRAnalytics = ({ id }) => {
                   outerRadius={80}
                   label
                 >
-                  {deviceData.map((entry, index) => (
+                  {analytics.deviceStats.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -146,7 +155,7 @@ const QRAnalytics = ({ id }) => {
           <h3 className="font-semibold mb-4">Hourly Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={formatHourlyStats}>
+              <BarChart data={analytics.hourlyStats}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" />
                 <YAxis />
