@@ -20,7 +20,13 @@ if (!process.env.MONGODB_URI) {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-app.use(cors({ credentials: true, origin: true }));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

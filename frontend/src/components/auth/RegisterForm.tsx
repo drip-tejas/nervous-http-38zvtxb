@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/axios";
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -15,22 +16,13 @@ const RegisterForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Registration failed");
-      }
-
-      const data = await response.json();
+      console.log("Submitting:", formData);
+      const { data } = await api.post("/auth/register", formData);
+      console.log("Response:", data);
       login(data.token);
       navigate("/");
     } catch (err) {
+      console.error("Error:", err);
       setError("Registration failed. Please try again.");
     }
   };
@@ -99,7 +91,7 @@ const RegisterForm = () => {
           </div>
           <button
             type="submit"
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Create Account
           </button>

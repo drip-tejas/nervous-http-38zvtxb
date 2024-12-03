@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import api from "../utils/axios";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,7 +17,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
-  login: (token: string) => {},
+  login: () => {},
   logout: () => {},
 });
 
@@ -26,27 +27,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
   const fetchUserData = useCallback(async (token: string) => {
     try {
-      const response = await fetch("/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setIsAuthenticated(true);
-      } else {
-        logout();
-      }
+      const { data } = await api.get("/auth/me");
+      setUser(data);
+      setIsAuthenticated(true);
     } catch (error) {
       logout();
     }
@@ -59,6 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [fetchUserData]
   );
+
+  const logout = () => {
+    localStorage.removeItem("authToken");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
