@@ -1,3 +1,4 @@
+// src/index.ts
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -30,15 +31,19 @@ mongoose
 // Add test route before other routes
 app.get("/test", async (req, res) => {
   try {
-    await mongoose.connection.db.admin().ping();
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error("Database not connected");
+    }
+    await db.admin().ping();
     res.json({ status: "Database connected" });
   } catch (error) {
     res.status(500).json({ status: "Database error", error });
   }
 });
 
+// Use single mount point for API routes
 app.use("/api", qrRoutes);
-app.use("/api/analytics", qrRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
