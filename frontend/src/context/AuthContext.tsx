@@ -45,11 +45,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [fetchUserData]
   );
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("authToken");
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }, []);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
@@ -66,3 +66,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export const useAuth = () => useContext(AuthContext);
+
+export default AuthContext;
