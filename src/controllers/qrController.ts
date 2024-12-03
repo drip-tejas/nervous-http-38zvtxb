@@ -112,3 +112,15 @@ export const addTestScans = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error adding test scans" });
   }
 };
+
+export const listQRCodes = async (req: Request, res: Response) => {
+  try {
+    const qrCodes = await QRCode.find()
+      .select("uniqueIdentifier targetUrl createdAt scans")
+      .sort({ createdAt: -1 }); // Most recent first
+
+    res.json(qrCodes);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching QR codes" });
+  }
+};
