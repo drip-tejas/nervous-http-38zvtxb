@@ -20,7 +20,7 @@ router.put("/qr/:id/url", updateQRCodeUrl);
 // Redirect and tracking
 router.get("/qr/redirect/:id", redirectAndTrackScan);
 
-// Test routes - Remove in production
+// Test routes - Remove in production okay
 router.post("/qr/test-scans/:id", addTestScans);
 
 export default router;
