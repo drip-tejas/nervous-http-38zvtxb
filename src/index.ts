@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import bodyParser from "body-parser";
 import qrRoutes from "./routes/qrRoutes";
+import authRoutes from "./routes/authRoutes";
 import dotenv from "dotenv";
 
 mongoose.set("strictQuery", true);
@@ -44,6 +45,7 @@ app.get("/test", async (req, res) => {
 
 // Use single mount point for API routes
 app.use("/api", qrRoutes);
+app.use("/api/auth", authRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
