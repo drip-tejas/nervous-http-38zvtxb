@@ -50,7 +50,7 @@ app.get("/test", async (req, res) => {
 });
 
 // Use single mount point for API routes
-app.use("/api", qrRoutes);
+app.use("/api/qr", qrRoutes);
 app.use("/api/auth", authRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
