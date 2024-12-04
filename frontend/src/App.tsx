@@ -6,6 +6,7 @@ import QRCodeGeneration from "./components/QRCodeGeneration";
 import QRCodeList from "./pages/QRCodeList";
 import QRCodeDetails from "./pages/QRCodeDetails";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 
 const App = () => {
   return (
@@ -14,7 +15,7 @@ const App = () => {
         <Routes>
           <Route path="/login" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
-
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
           <Route
             path="/"
             element={
