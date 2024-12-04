@@ -19,9 +19,11 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, name } = req.body;
+    console.log('Registration attempt:', { email, name, passwordLength: password?.length });
 
     // Validation
     if (!email || !password || !name) {
+      console.log('Missing fields:', { email: !!email, password: !!password, name: !!name });
       res.status(400).json({ error: "All fields are required" });
       return;
     }
@@ -29,18 +31,21 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('Invalid email format:', email);
       res.status(400).json({ error: "Invalid email format" });
       return;
     }
 
-    // Password length check
-    if (password.length < 6) {
-      res.status(400).json({ error: "Password must be at least 6 characters" });
+    // Password length check - update to match schema
+    if (password.length < 8) { // Changed from 6 to 8
+      console.log('Password too short:', password.length);
+      res.status(400).json({ error: "Password must be at least 8 characters" });
       return;
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log('Email already exists:', email);
       res.status(400).json({ error: "Email already registered" });
       return;
     }
@@ -55,9 +60,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     );
 
     res.status(201).json({ user, token });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(400).json({ error: "Registration failed" });
+  } catch (error: any) {
+    console.error("Registration error:", {
+      error: error.message,
+      name: error.name,
+      code: error.code
+    });
+    res.status(400).json({ error: error.message || "Registration failed" });
   }
 };
 

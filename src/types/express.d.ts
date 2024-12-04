@@ -1,12 +1,12 @@
 // /backend/src/types/express.d.ts
-import { Request } from "express";
+import { IUser } from "../models/User";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        _id: string;
-      };
+      user?: IUser & { _id: string };
     }
   }
 }
+
+export {};

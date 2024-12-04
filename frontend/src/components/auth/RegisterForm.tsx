@@ -21,8 +21,12 @@ const RegisterForm = () => {
       console.log("Response:", data);
       login(data.token);
       navigate("/");
-    } catch (err) {
-      console.error("Error:", err);
+    } catch (err: any) {
+      console.error("Registration error details:", {
+        err,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setError("Registration failed. Please try again.");
     }
   };

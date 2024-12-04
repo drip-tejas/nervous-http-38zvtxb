@@ -12,7 +12,7 @@ mongoose.set("strictQuery", true);
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const port = process.env.PORT || 8000;
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not defined");
@@ -53,6 +53,6 @@ app.get("/test", async (req, res) => {
 app.use("/api/qr", qrRoutes);
 app.use("/api/auth", authRoutes);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(port, () => console.log(`Server running on port ${port}`));
 
 export default app;
