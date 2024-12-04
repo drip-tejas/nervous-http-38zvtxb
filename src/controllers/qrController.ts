@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import QRCode, { IQRCode } from "../models/QRCode";
 import qrcode from "qrcode";
+import { getLocationFromIP } from "../utils/geoLocation";
 
 const validateUrl = (url: string): string => {
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -182,3 +183,63 @@ export const deleteQRCode = async (req: Request, res: Response) => {
       .json({ message: error?.message || "Error deleting QR code" });
   }
 };
+
+export const trackScan = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // Get IP and provide a fallback, ensuring we always have a string
+    const ipAddress = (
+      req.ip ||
+      req.connection.remoteAddress ||
+      "0.0.0.0"
+    ).replace(/^::ffff:/, "");
+    const userAgent = req.headers["user-agent"];
+
+    // Get device info from user agent
+    const deviceInfo = userAgent ? parseUserAgent(userAgent) : "unknown";
+
+    // Now ipAddress is guaranteed to be a string
+    const location = await getLocationFromIP(ipAddress);
+
+    const qrCode = await QRCode.findOneAndUpdate(
+      { uniqueIdentifier: id },
+      {
+        $push: {
+          scans: {
+            timestamp: new Date(),
+            ipAddress,
+            deviceInfo,
+            location,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!qrCode) {
+      return res.status(404).json({ message: "QR code not found" });
+    }
+
+    // Redirect to target URL
+    res.redirect(qrCode.currentUrl);
+  } catch (error) {
+    console.error("Scan tracking error:", error);
+    // Still redirect even if tracking fails
+    const qrCode = await QRCode.findOne({ uniqueIdentifier: req.params.id });
+    res.redirect(qrCode ? qrCode.currentUrl : "/");
+  }
+};
+
+function parseUserAgent(userAgent: string): string {
+  const userAgentLower = userAgent.toLowerCase();
+  if (/iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(userAgentLower)) {
+    return 'Mobile';
+  }
+  if (/tablet|ipad/i.test(userAgentLower)) {
+    return 'Tablet';
+  }
+  if (/windows|macintosh|linux/i.test(userAgentLower)) {
+    return 'Desktop';
+  }
+  return 'Other';
+}
