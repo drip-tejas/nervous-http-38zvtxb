@@ -1,5 +1,5 @@
 // /backend/src/routes/qrRoutes.ts
-import { Router } from 'express';
+import express from 'express';
 import { 
   generateQRCode, 
   listQRCodes,
@@ -11,17 +11,17 @@ import {
 } from '../controllers/qrController';
 import { authMiddleware } from '../middleware/auth';
 
-const router = Router();
+const router = express.Router();
 
 // Protected routes
-router.post("/generate", authMiddleware, generateQRCode);
-router.get("/list", authMiddleware, listQRCodes);
-router.get("/:id", authMiddleware, getQRCode);
-router.put("/:id/url", authMiddleware, updateQRCodeUrl);
-router.delete("/:id", authMiddleware, deleteQRCode);
+router.post("/generate", authMiddleware, generateQRCode as any);
+router.get("/list", authMiddleware, listQRCodes as any);
+router.get("/:id", authMiddleware, getQRCode as any);
+router.put("/:id/url", authMiddleware, updateQRCodeUrl as any);
+router.delete("/:id", authMiddleware, deleteQRCode as any);
 
 // Public routes
-router.get("/redirect/:id", redirectAndTrackScan);
-router.get("/scan/:id", trackScan);
+router.get("/redirect/:id", redirectAndTrackScan as any);
+router.get("/scan/:id", trackScan as any);
 
 export default router;
