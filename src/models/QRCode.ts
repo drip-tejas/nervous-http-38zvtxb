@@ -50,25 +50,29 @@ const QRCodeSchema: Schema = new Schema({
     default: uuidv4,
     unique: true,
   },
-  urlHistory: [{
-    url: String,
-    changedAt: {
-      type: Date,
-      default: Date.now,
-    }
-  }],
-  scans: [{
-    timestamp: {
-      type: Date,
-      default: Date.now,
+  urlHistory: [
+    {
+      url: String,
+      changedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
-    ipAddress: String,
-    deviceInfo: String,
-    location: {
-      country: String,
-      city: String,
+  ],
+  scans: [
+    {
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+      ipAddress: String,
+      deviceInfo: String,
+      location: {
+        country: String,
+        city: String,
+      },
     },
-  }],
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
