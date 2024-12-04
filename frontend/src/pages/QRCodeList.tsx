@@ -1,7 +1,7 @@
 // /frontend/src/pages/QRCodeList.tsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "../utils/axios";
+import api from "../utils/axios";
 
 interface QRCode {
   uniqueIdentifier: string;
@@ -24,9 +24,15 @@ const QRCodeList = () => {
   useEffect(() => {
     const fetchCodes = async () => {
       try {
-        const response = await axios.get("/api/qr/list");
+        console.log("Auth token:", localStorage.getItem("authToken"));
+        console.log(
+          "Trying to fetch QRs from:",
+          `${api.defaults.baseURL}/qr/list`
+        );
+        const response = await api.get("/qr/list");
         setCodes(response.data.data);
       } catch (err: any) {
+        console.error("Error fetching codes:", err);
         setError(err.response?.data?.message || "Failed to load QR codes");
       } finally {
         setLoading(false);
