@@ -10,39 +10,37 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegisterForm />} />
-          <Route path="/analytics" element={<AnalyticsDashboard />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <QRCodeList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/qr/create"
-            element={
-              <ProtectedRoute>
-                <QRCodeGeneration />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/qr/:id"
-            element={
-              <ProtectedRoute>
-                <QRCodeDetails />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<RegisterForm />} />
+        <Route path="/analytics" element={<AnalyticsDashboard />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <QRCodeList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/qr/create"
+          element={
+            <ProtectedRoute>
+              <QRCodeGeneration />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/qr/:id"
+          element={
+            <ProtectedRoute>
+              <QRCodeDetails />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </AuthProvider>
   );
 };
 

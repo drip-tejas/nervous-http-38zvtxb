@@ -1,28 +1,35 @@
-import { Request, Response, NextFunction } from "express";
+// /backend/src/middleware/auth.ts
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
-import { User } from "../models/User";
+import { User, IUser } from "../models/User";
 
-interface AuthRequest extends Request {
-  user?: any;
+declare module "express" {
+  interface Request {
+    user?: IUser & { _id: string };
+  }
 }
 
-export const authMiddleware = async (
-  req: AuthRequest,
+export const authMiddleware: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-      throw new Error();
+      res.status(401).json({ error: "Please authenticate" });
+      return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    const user = await User.findOne({ _id: (decoded as any)._id });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      _id: string;
+    };
+    const user = await User.findOne({ _id: decoded._id });
 
     if (!user) {
-      throw new Error();
+      res.status(401).json({ error: "Please authenticate" });
+      return;
     }
 
     req.user = user;

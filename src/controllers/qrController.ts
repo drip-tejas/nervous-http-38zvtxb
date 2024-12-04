@@ -11,21 +11,24 @@ const validateUrl = (url: string): string => {
   return url;
 };
 
-export const generateQRCode = async (req: Request, res: Response) => {
+export const generateQRCode = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { targetUrl, customIdentifier } = req.body;
-    const userId = req.user._id;
+    const userId = req.user?._id;
 
     if (!targetUrl) {
-      return res.status(400).json({ message: "Target URL is required" });
+      res.status(400).json({ message: "Target URL is required" });
+      return;
     }
 
     if (customIdentifier) {
       const existingQRCode = await QRCode.findOne({ customIdentifier });
       if (existingQRCode) {
-        return res
-          .status(400)
-          .json({ message: "Custom identifier already exists" });
+        res.status(400).json({ message: "Custom identifier already exists" });
+        return;
       }
     }
 
@@ -65,7 +68,10 @@ export const generateQRCode = async (req: Request, res: Response) => {
   }
 };
 
-export const redirectAndTrackScan = async (req: Request, res: Response) => {
+export const redirectAndTrackScan = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const qrCode = await QRCode.findOne({
@@ -73,7 +79,8 @@ export const redirectAndTrackScan = async (req: Request, res: Response) => {
     });
 
     if (!qrCode) {
-      return res.status(404).json({ message: "QR Code not found" });
+      res.status(404).json({ message: "QR Code not found" });
+      return;
     }
 
     qrCode.scans.push({
@@ -89,20 +96,25 @@ export const redirectAndTrackScan = async (req: Request, res: Response) => {
   }
 };
 
-export const updateQRCodeUrl = async (req: Request, res: Response) => {
+export const updateQRCodeUrl = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { newUrl } = req.body;
-    const userId = req.user._id;
+    const userId = req.user?._id;
 
     if (!newUrl) {
-      return res.status(400).json({ message: "New URL is required" });
+      res.status(400).json({ message: "New URL is required" });
+      return;
     }
 
     const qrCode = await QRCode.findOne({ uniqueIdentifier: id, user: userId });
 
     if (!qrCode) {
-      return res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ message: "QR code not found" });
+      return;
     }
 
     const validatedUrl = validateUrl(newUrl);
@@ -127,16 +139,17 @@ export const updateQRCodeUrl = async (req: Request, res: Response) => {
   }
 };
 
-export const getQRCode = async (req: Request, res: Response) => {
+export const getQRCode = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id;
     const qrCode = await QRCode.findOne({
       uniqueIdentifier: req.params.id,
       user: userId,
     });
 
     if (!qrCode) {
-      return res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ message: "QR code not found" });
+      return;
     }
 
     res.json({ success: true, data: qrCode });
@@ -147,9 +160,12 @@ export const getQRCode = async (req: Request, res: Response) => {
   }
 };
 
-export const listQRCodes = async (req: Request, res: Response) => {
+export const listQRCodes = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id;
     const qrCodes = await QRCode.find({ user: userId })
       .select(
         "uniqueIdentifier targetUrl currentUrl createdAt scans urlHistory"
@@ -164,16 +180,20 @@ export const listQRCodes = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteQRCode = async (req: Request, res: Response) => {
+export const deleteQRCode = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id;
     const qrCode = await QRCode.findOneAndDelete({
       uniqueIdentifier: req.params.id,
       user: userId,
     });
 
     if (!qrCode) {
-      return res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ message: "QR code not found" });
+      return;
     }
 
     res.json({ success: true, message: "QR code deleted successfully" });
@@ -184,21 +204,16 @@ export const deleteQRCode = async (req: Request, res: Response) => {
   }
 };
 
-export const trackScan = async (req: Request, res: Response) => {
+export const trackScan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    // Get IP and provide a fallback, ensuring we always have a string
     const ipAddress = (
       req.ip ||
       req.connection.remoteAddress ||
       "0.0.0.0"
     ).replace(/^::ffff:/, "");
     const userAgent = req.headers["user-agent"];
-
-    // Get device info from user agent
     const deviceInfo = userAgent ? parseUserAgent(userAgent) : "unknown";
-
-    // Now ipAddress is guaranteed to be a string
     const location = await getLocationFromIP(ipAddress);
 
     const qrCode = await QRCode.findOneAndUpdate(
@@ -217,14 +232,13 @@ export const trackScan = async (req: Request, res: Response) => {
     );
 
     if (!qrCode) {
-      return res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ message: "QR code not found" });
+      return;
     }
 
-    // Redirect to target URL
     res.redirect(qrCode.currentUrl);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Scan tracking error:", error);
-    // Still redirect even if tracking fails
     const qrCode = await QRCode.findOne({ uniqueIdentifier: req.params.id });
     res.redirect(qrCode ? qrCode.currentUrl : "/");
   }
@@ -232,14 +246,18 @@ export const trackScan = async (req: Request, res: Response) => {
 
 function parseUserAgent(userAgent: string): string {
   const userAgentLower = userAgent.toLowerCase();
-  if (/iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(userAgentLower)) {
-    return 'Mobile';
+  if (
+    /iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(
+      userAgentLower
+    )
+  ) {
+    return "Mobile";
   }
   if (/tablet|ipad/i.test(userAgentLower)) {
-    return 'Tablet';
+    return "Tablet";
   }
   if (/windows|macintosh|linux/i.test(userAgentLower)) {
-    return 'Desktop';
+    return "Desktop";
   }
-  return 'Other';
+  return "Other";
 }

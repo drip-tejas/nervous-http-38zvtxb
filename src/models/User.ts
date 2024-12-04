@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   name: string;
   createdAt: Date;
+  _id: string; // explicitly define _id as string
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
