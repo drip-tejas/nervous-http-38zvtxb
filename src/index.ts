@@ -1,18 +1,13 @@
-// src/index.ts
-import express from "express";
 import mongoose from "mongoose";
-import cors from "cors";
-import bodyParser from "body-parser";
-import qrRoutes from "./routes/qrRoutes";
-import authRoutes from "./routes/authRoutes";
+import app from "./app";
 import dotenv from "dotenv";
-
-mongoose.set("strictQuery", true);
 
 dotenv.config();
 
-const app = express();
+mongoose.set("strictQuery", true);
+
 const port = process.env.PORT || 8000;
+const nodeEnv = process.env.NODE_ENV || "development";
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not defined");
@@ -20,39 +15,19 @@ if (!process.env.MONGODB_URI) {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB error:", err));
-
-// Add test route before other routes
-app.get("/test", async (req, res) => {
+// Start server function
+const startServer = async () => {
   try {
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error("Database not connected");
-    }
-    await db.admin().ping();
-    res.json({ status: "Database connected" });
+    await mongoose.connect(MONGODB_URI);
+    console.log("MongoDB connected");
+
+    app.listen(port, () => {
+      console.log(`Server running on port ${port} in ${nodeEnv} mode`);
+    });
   } catch (error) {
-    res.status(500).json({ status: "Database error", error });
+    console.error("Failed to start server:", error);
+    process.exit(1);
   }
-});
+};
 
-// Use single mount point for API routes
-app.use("/api/auth", authRoutes);
-app.use("/api/qr", qrRoutes);
-
-app.listen(port, () => console.log(`Server running on port ${port}`));
-
-export default app;
+startServer();

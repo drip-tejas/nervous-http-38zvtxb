@@ -1,0 +1,12 @@
+{
+    "buildCommand": "npm install && npm run build",
+    "startCommand": "npm start",
+    "projectType": "node",
+    "envVars": [
+      "PORT",
+      "MONGODB_URI",
+      "JWT_SECRET",
+      "CORS_ORIGIN",
+      "NODE_ENV"
+    ]
+  }

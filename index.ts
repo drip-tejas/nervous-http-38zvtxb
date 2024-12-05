@@ -1,2 +1,2 @@
 // index.ts (root)
-import './src/index';
+import "./src/app";
