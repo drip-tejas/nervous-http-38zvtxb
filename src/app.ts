@@ -1,9 +1,4 @@
-import express, {
-  Request,
-  Response,
-  NextFunction,
-  ErrorRequestHandler,
-} from "express";
+import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
@@ -32,7 +27,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "healthy",
     environment: nodeEnv,
@@ -41,7 +36,7 @@ app.get("/health", (req, res) => {
 });
 
 // Database test endpoint
-app.get("/test", async (req, res) => {
+app.get("/test", async (_req, res) => {
   try {
     const db = mongoose.connection.db;
     if (!db) {
@@ -59,7 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/qr", qrRoutes);
 
 // Global error handler
-const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+const errorHandler: express.ErrorRequestHandler = (err, _req, res, _next) => {
   console.error(err.stack);
   res.status(500).json({
     error: nodeEnv === "production" ? "Internal server error" : err.message,
