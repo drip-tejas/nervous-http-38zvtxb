@@ -1,0 +1,12 @@
+{
+    "buildCommand": "npm install && npm run build",
+    "startCommand": "npm start",
+    "projectType": "node",
+    "envVars": {
+      "PORT": "8000",
+      "NODE_ENV": "production",
+      "MONGODB_URI": "mongodb+srv://tehas:password@dripqr.xxxxx.mongodb.net/dripqr?retryWrites=true&w=majority&appName=DripQR",
+      "JWT_SECRET": "secretstring",
+      "CORS_ORIGIN": "https://your-frontend-url.neetodeploy.com"
+    }
+  }
