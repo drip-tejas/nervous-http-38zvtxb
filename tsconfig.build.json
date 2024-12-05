@@ -1,11 +1,18 @@
 {
     "extends": "./tsconfig.json",
+    "include": [
+      "index.ts",
+      "src/**/*.ts"  // Note: no .tsx files
+    ],
     "exclude": [
       "node_modules",
       "dist",
       "coverage",
       "**/*.test.ts",
       "**/*.spec.ts",
-      "test"
+      "test",
+      "frontend",
+      "src/components",
+      "**/*.tsx"
     ]
   }
