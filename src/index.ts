@@ -1,4 +1,3 @@
-// src/index.ts
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -7,12 +6,13 @@ import qrRoutes from "./routes/qrRoutes";
 import authRoutes from "./routes/authRoutes";
 import dotenv from "dotenv";
 
-mongoose.set("strictQuery", true);
-
 dotenv.config();
+
+mongoose.set("strictQuery", true);
 
 const app = express();
 const port = process.env.PORT || 8000;
+const nodeEnv = process.env.NODE_ENV || "development";
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not defined");
@@ -20,22 +20,30 @@ if (!process.env.MONGODB_URI) {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
+// Configure CORS based on environment
+const corsOrigin = process.env.CORS_ORIGIN || "*";
 app.use(
   cors({
-    origin: "*",
+    origin: corsOrigin,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB error:", err));
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    environment: nodeEnv,
+    timestamp: new Date().toISOString(),
+  });
+});
 
-// Add test route before other routes
+// Database test endpoint
 app.get("/test", async (req, res) => {
   try {
     const db = mongoose.connection.db;
@@ -49,10 +57,40 @@ app.get("/test", async (req, res) => {
   }
 });
 
-// Use single mount point for API routes
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/qr", qrRoutes);
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+// Global error handler
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error(err.stack);
+    res.status(500).json({
+      error: nodeEnv === "production" ? "Internal server error" : err.message,
+    });
+  }
+);
+
+// Start server function
+const startServer = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI);
+    console.log("MongoDB connected");
+
+    app.listen(port, () => {
+      console.log(`Server running on port ${port} in ${nodeEnv} mode`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;
