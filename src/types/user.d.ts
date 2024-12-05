@@ -1,3 +1,4 @@
+// /backend/src/types/user.d.ts
 export interface IUser {
   _id: string;
   email: string;

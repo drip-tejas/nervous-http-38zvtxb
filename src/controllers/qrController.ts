@@ -1,77 +1,61 @@
-// /backend/src/controllers/qrController.ts
-import { Request, Response } from "express";
-import QRCode, { IQRCode } from "../models/QRCode";
+import QRCode from "../models/QRCode";
 import qrcode from "qrcode";
 import { getLocationFromIP } from "../utils/geoLocation";
+import { QRAuthHandler } from "../types/qr";
 
-const validateUrl = (url: string): string => {
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return `https://${url}`;
-  }
-  return url;
-};
+const validateUrl = (url: string): string =>
+  url.startsWith("http://") || url.startsWith("https://")
+    ? url
+    : `https://${url}`;
 
-export const generateQRCode = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const generateQRCode: QRAuthHandler = async (req, res) => {
   try {
     const { targetUrl, customIdentifier } = req.body;
-    const userId = req.user?._id;
-
     if (!targetUrl) {
-      res.status(400).json({ message: "Target URL is required" });
+      res
+        .status(400)
+        .json({ success: false, message: "Target URL is required" });
       return;
     }
 
     if (customIdentifier) {
-      const existingQRCode = await QRCode.findOne({ customIdentifier });
-      if (existingQRCode) {
-        res.status(400).json({ message: "Custom identifier already exists" });
+      const existing = await QRCode.findOne({ customIdentifier });
+      if (existing) {
+        res.status(400).json({ success: false, message: "Identifier exists" });
         return;
       }
     }
 
-    const validatedUrl = validateUrl(targetUrl);
-    const redirectUrl = `${
-      process.env.BASE_URL || "http://localhost:8000"
-    }/api/qr/redirect/${customIdentifier || ""}`;
-    const qrCodeDataUrl = await qrcode.toDataURL(redirectUrl);
+    const validUrl = validateUrl(targetUrl);
+    const redirectUrl = `${process.env.BASE_URL}/api/qr/redirect/${
+      customIdentifier || ""
+    }`;
+    const qrDataUrl = await qrcode.toDataURL(redirectUrl);
 
-    const qrCodeInstance = new QRCode({
-      user: userId,
-      targetUrl: validatedUrl,
-      currentUrl: validatedUrl,
+    const qrCode = await QRCode.create({
+      user: req.user._id,
+      targetUrl: validUrl,
+      currentUrl: validUrl,
       customIdentifier,
-      urlHistory: [
-        {
-          url: validatedUrl,
-          changedAt: new Date(),
-        },
-      ],
+      urlHistory: [{ url: validUrl, changedAt: new Date() }],
     });
-
-    await qrCodeInstance.save();
 
     res.status(201).json({
       success: true,
       data: {
-        qrCodeUrl: qrCodeDataUrl,
-        uniqueIdentifier: qrCodeInstance.uniqueIdentifier,
-        targetUrl: validatedUrl,
+        qrCodeUrl: qrDataUrl,
+        uniqueIdentifier: qrCode.uniqueIdentifier,
+        targetUrl: validUrl,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     res
       .status(500)
-      .json({ message: error?.message || "QR Code generation failed" });
+      .json({ success: false, message: "Failed to generate QR code" });
   }
 };
 
-export const redirectAndTrackScan = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const redirectAndTrackScan: QRAuthHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const qrCode = await QRCode.findOne({
@@ -79,132 +63,114 @@ export const redirectAndTrackScan = async (
     });
 
     if (!qrCode) {
-      res.status(404).json({ message: "QR Code not found" });
+      res.status(404).json({ success: false, message: "QR code not found" });
       return;
     }
 
     qrCode.scans.push({
       timestamp: new Date(),
-      ipAddress: req.ip,
+      ipAddress: req.ip || "",
       deviceInfo: req.get("User-Agent") || "Unknown",
     });
 
     await qrCode.save();
     res.redirect(qrCode.currentUrl);
-  } catch (error: any) {
-    res.status(500).json({ message: error?.message || "Redirect failed" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Redirect failed" });
   }
 };
 
-export const updateQRCodeUrl = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const updateQRCodeUrl: QRAuthHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const { newUrl } = req.body;
-    const userId = req.user?._id;
 
     if (!newUrl) {
-      res.status(400).json({ message: "New URL is required" });
+      res.status(400).json({ success: false, message: "New URL is required" });
       return;
     }
 
-    const qrCode = await QRCode.findOne({ uniqueIdentifier: id, user: userId });
-
-    if (!qrCode) {
-      res.status(404).json({ message: "QR code not found" });
-      return;
-    }
-
-    const validatedUrl = validateUrl(newUrl);
-
-    qrCode.urlHistory.push({
-      url: qrCode.currentUrl,
-      changedAt: new Date(),
+    const qrCode = await QRCode.findOne({
+      uniqueIdentifier: id,
+      user: req.user._id,
     });
 
-    qrCode.currentUrl = validatedUrl;
+    if (!qrCode) {
+      res.status(404).json({ success: false, message: "QR code not found" });
+      return;
+    }
+
+    const validUrl = validateUrl(newUrl);
+    qrCode.urlHistory.push({ url: qrCode.currentUrl, changedAt: new Date() });
+    qrCode.currentUrl = validUrl;
     await qrCode.save();
 
     res.json({
       success: true,
-      data: {
-        currentUrl: validatedUrl,
-        history: qrCode.urlHistory,
-      },
+      data: qrCode,
     });
-  } catch (error: any) {
-    res.status(500).json({ message: error?.message || "Failed to update URL" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to update URL" });
   }
 };
 
-export const getQRCode = async (req: Request, res: Response): Promise<void> => {
+export const getQRCode: QRAuthHandler = async (req, res) => {
   try {
-    const userId = req.user?._id;
     const qrCode = await QRCode.findOne({
       uniqueIdentifier: req.params.id,
-      user: userId,
+      user: req.user._id,
     });
 
     if (!qrCode) {
-      res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ success: false, message: "QR code not found" });
       return;
     }
 
     res.json({ success: true, data: qrCode });
-  } catch (error: any) {
+  } catch (error) {
     res
       .status(500)
-      .json({ message: error?.message || "Error fetching QR code" });
+      .json({ success: false, message: "Failed to fetch QR code" });
   }
 };
 
-export const listQRCodes = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const listQRCodes: QRAuthHandler = async (req, res) => {
   try {
-    const userId = req.user?._id;
-    const qrCodes = await QRCode.find({ user: userId })
+    const qrCodes = await QRCode.find({ user: req.user._id })
       .select(
         "uniqueIdentifier targetUrl currentUrl createdAt scans urlHistory"
       )
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: qrCodes });
-  } catch (error: any) {
+  } catch (error) {
     res
       .status(500)
-      .json({ message: error?.message || "Error fetching QR codes" });
+      .json({ success: false, message: "Failed to fetch QR codes" });
   }
 };
 
-export const deleteQRCode = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const deleteQRCode: QRAuthHandler = async (req, res) => {
   try {
-    const userId = req.user?._id;
     const qrCode = await QRCode.findOneAndDelete({
       uniqueIdentifier: req.params.id,
-      user: userId,
+      user: req.user._id,
     });
 
     if (!qrCode) {
-      res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ success: false, message: "QR code not found" });
       return;
     }
 
     res.json({ success: true, message: "QR code deleted successfully" });
-  } catch (error: any) {
+  } catch (error) {
     res
       .status(500)
-      .json({ message: error?.message || "Error deleting QR code" });
+      .json({ success: false, message: "Failed to delete QR code" });
   }
 };
 
-export const trackScan = async (req: Request, res: Response): Promise<void> => {
+export const trackScan: QRAuthHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const ipAddress = (
@@ -232,12 +198,12 @@ export const trackScan = async (req: Request, res: Response): Promise<void> => {
     );
 
     if (!qrCode) {
-      res.status(404).json({ message: "QR code not found" });
+      res.status(404).json({ success: false, message: "QR code not found" });
       return;
     }
 
     res.redirect(qrCode.currentUrl);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Scan tracking error:", error);
     const qrCode = await QRCode.findOne({ uniqueIdentifier: req.params.id });
     res.redirect(qrCode ? qrCode.currentUrl : "/");
@@ -245,18 +211,14 @@ export const trackScan = async (req: Request, res: Response): Promise<void> => {
 };
 
 function parseUserAgent(userAgent: string): string {
-  const userAgentLower = userAgent.toLowerCase();
-  if (
-    /iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(
-      userAgentLower
-    )
-  ) {
+  const ua = userAgent.toLowerCase();
+  if (/iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(ua)) {
     return "Mobile";
   }
-  if (/tablet|ipad/i.test(userAgentLower)) {
+  if (/tablet|ipad/i.test(ua)) {
     return "Tablet";
   }
-  if (/windows|macintosh|linux/i.test(userAgentLower)) {
+  if (/windows|macintosh|linux/i.test(ua)) {
     return "Desktop";
   }
   return "Other";
