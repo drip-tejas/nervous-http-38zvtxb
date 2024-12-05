@@ -1,7 +1,9 @@
 // /frontend/src/pages/QRCodeDetails.tsx
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "../utils/axios";
+import QRCode from "react-qr-code";
+import { ChevronLeft } from "lucide-react";
 
 interface QRDetails {
   uniqueIdentifier: string;
@@ -67,10 +69,73 @@ const QRCodeDetails = () => {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6">
+      <div className="mb-6">
+        <Link
+          to="/qr"
+          className="flex items-center text-blue-600 hover:text-blue-800"
+        >
+          <ChevronLeft size={20} />
+          <span>Back to QR Codes</span>
+        </Link>
+      </div>
+
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-4">
           {details.customIdentifier || details.uniqueIdentifier}
         </h1>
+
+        <div className="mb-8 flex flex-col items-center p-6 bg-gray-50 rounded-lg">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <QRCode value={details.currentUrl} size={200} level="H" />
+          </div>
+          <button
+            onClick={() => {
+              const svg = document.querySelector("svg");
+              if (!svg) {
+                console.error("SVG element not found");
+                return;
+              }
+
+              const svgData = new XMLSerializer().serializeToString(svg);
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+
+              if (!ctx) {
+                console.error("Canvas context not available");
+                return;
+              }
+
+              const img = new Image();
+              img.onload = () => {
+                try {
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  ctx.fillStyle = "white";
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                  ctx.drawImage(img, 0, 0);
+                  const pngFile = canvas.toDataURL("image/png");
+                  const downloadLink = document.createElement("a");
+                  downloadLink.download = `qr-code-${details.uniqueIdentifier}.png`;
+                  downloadLink.href = pngFile;
+                  downloadLink.click();
+                } catch (error) {
+                  console.error("Error generating QR code image:", error);
+                }
+              };
+
+              img.onerror = () => {
+                console.error("Error loading image");
+              };
+
+              img.src =
+                "data:image/svg+xml;base64," +
+                btoa(unescape(encodeURIComponent(svgData)));
+            }}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Download QR Code
+          </button>
+        </div>
 
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Update URL</h2>
