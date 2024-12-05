@@ -34,7 +34,7 @@ const QRCodeDetails = () => {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await axios.get(`/api/qr/${id}`);
+        const response = await axios.get(`/qr/${id}`);
         setDetails(response.data.data);
         setNewUrl(response.data.data.currentUrl);
       } catch (err: any) {
@@ -52,8 +52,8 @@ const QRCodeDetails = () => {
   const handleUrlUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.put(`/api/qr/${id}/url`, { newUrl });
-      const response = await axios.get(`/api/qr/${id}`);
+      await axios.put(`/qr/${id}/url`, { newUrl });
+      const response = await axios.get(`/qr/${id}`);
       setDetails(response.data.data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update URL");

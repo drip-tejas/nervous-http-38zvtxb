@@ -18,10 +18,14 @@ const QRCodeGeneration = () => {
     setError("");
 
     try {
-      const response = await axios.post("/api/qr/generate", {
+      console.log("Making API request to:", "/qr/generate"); // Debug log
+
+      const response = await axios.post("/qr/generate", {
         targetUrl: url,
         customIdentifier: customId || undefined,
       });
+
+      console.log("API Response:", response.data); // Debug log
 
       setQrData(response.data.data.qrCodeUrl);
       setTimeout(
@@ -29,6 +33,8 @@ const QRCodeGeneration = () => {
         2000
       );
     } catch (err: any) {
+      console.error("API Error:", err); // Debug log
+
       setError(err.response?.data?.message || "Failed to generate QR code");
     } finally {
       setLoading(false);
