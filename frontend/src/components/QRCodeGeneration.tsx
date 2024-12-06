@@ -1,7 +1,8 @@
 // /frontend/src/components/QRCodeGeneration.tsx
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
+import { Download } from "lucide-react";
 import axios from "../utils/axios";
 
 const QRCodeGeneration = () => {
@@ -11,6 +12,48 @@ const QRCodeGeneration = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const qrRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = () => {
+    const svg = qrRef.current?.querySelector("svg");
+    if (!svg) {
+      console.error("SVG element not found");
+      return;
+    }
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      console.error("Canvas context not available");
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      try {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `qr-code-${customId || "download"}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      } catch (error) {
+        console.error("Error generating QR code image:", error);
+        setError("Failed to download QR code");
+      }
+    };
+
+    img.src =
+      "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(svgData)));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +90,20 @@ const QRCodeGeneration = () => {
 
       <div className="mb-6">
         {qrData && (
-          <div className="flex justify-center mb-4">
-            <img src={qrData} alt="Generated QR Code" />
+          <div className="flex flex-col items-center gap-4">
+            <div
+              ref={qrRef}
+              className="flex justify-center mb-4 bg-white p-4 rounded-lg"
+            >
+              <QRCode value={qrData} size={256} />
+            </div>
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download QR Code</span>
+            </button>
           </div>
         )}
       </div>
