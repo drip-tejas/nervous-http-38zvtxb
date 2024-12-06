@@ -49,9 +49,15 @@ export const generateQRCode: QRAuthHandler = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("QR Generation Error:", error);
+
     res
       .status(500)
-      .json({ success: false, message: "Failed to generate QR code" });
+      .json({
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to generate QR code",
+      });
   }
 };
 

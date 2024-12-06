@@ -38,6 +38,10 @@ import {
   trackScan,
   deleteQRCode,
 } from "../controllers/qrController";
+import {
+  getQRCodeAnalytics,
+  getGlobalAnalytics,
+} from "../controllers/analyticsController";
 import { authMiddleware } from "../middleware/auth";
 
 const router = express.Router();
@@ -45,12 +49,16 @@ const router = express.Router();
 // Protected routes
 router.post("/generate", authMiddleware, generateQRCode);
 router.get("/list", authMiddleware, listQRCodes);
-router.get("/:id", authMiddleware, getQRCode);
-router.put("/:id/url", authMiddleware, updateQRCodeUrl);
-router.delete("/:id", authMiddleware, deleteQRCode);
+router.get("/analytics/:id", authMiddleware, getQRCodeAnalytics);
+router.get("/analytics", authMiddleware, getGlobalAnalytics);
 
 // Public routes
 router.get("/redirect/:id", redirectAndTrackScan);
 router.get("/scan/:id", trackScan);
+
+// protected catch-all routes
+router.get("/:id", authMiddleware, getQRCode);
+router.put("/:id/url", authMiddleware, updateQRCodeUrl);
+router.delete("/:id", authMiddleware, deleteQRCode);
 
 export default router;
