@@ -1,40 +1,56 @@
-// /backend/src/middleware/auth.ts
-import { Request, Response, NextFunction, RequestHandler } from "express";
+/*import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { User, IUser } from "../models/User";
+import { IUser } from "../types/user";
 
-declare module "express" {
-  interface Request {
-    user?: IUser & { _id: string };
-  }
+interface JwtPayload {
+  userId: string;
 }
 
-export const authMiddleware: RequestHandler = async (
+export const authMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+) => {
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    const token = req.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {
-      res.status(401).json({ error: "Please authenticate" });
+      res.status(401).json({ success: false, message: "No token provided" });
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-      _id: string;
-    };
-    const user = await User.findOne({ _id: decoded._id });
-
-    if (!user) {
-      res.status(401).json({ error: "Please authenticate" });
-      return;
-    }
-
-    req.user = user;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    req.user = { _id: decoded.userId } as IUser;
     next();
   } catch (error) {
-    res.status(401).json({ error: "Please authenticate" });
+    res.status(401).json({ success: false, message: "Invalid token" });
+  }
+};
+*/
+
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { IUser } from "../types/user";
+
+export const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+
+    if (!token) {
+      res.status(401).json({ success: false, message: "No token provided" });
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      _id: string;
+    };
+    (req as any).user = { _id: decoded._id } as IUser;
+    next();
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
