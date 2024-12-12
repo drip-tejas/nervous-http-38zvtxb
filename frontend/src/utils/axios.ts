@@ -1,10 +1,17 @@
 import axios from "axios";
+import toast from 'react-hot-toast';
 
+/*
 const api = axios.create({
   baseURL: "https://ss6vpl-8000.csb.app/api",
   headers: {
     "Content-Type": "application/json",
   },
+});
+*/
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL,
 });
 
 api.interceptors.request.use((config) => {
@@ -40,6 +47,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("authToken");
       window.location.href = "/login";
+      toast.error('Session expired. Please login again.');
     }
     return Promise.reject(error);
   }
