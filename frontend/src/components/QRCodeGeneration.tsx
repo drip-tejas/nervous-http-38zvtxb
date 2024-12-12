@@ -4,81 +4,71 @@ import { useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { Download } from "lucide-react";
 import axios from "../utils/axios";
+import toast from "react-hot-toast"
+import { downloadQRCode } from "../utils/downloadQRCode";
 
-const QRCodeGeneration = () => {
+interface QRCodeGenerationProps {
+  onSuccess?: (identifier: string) => void;
+}
+
+
+const QRCodeGeneration = ({ onSuccess }: QRCodeGenerationProps) => {
   const [url, setUrl] = useState("");
   const [customId, setCustomId] = useState("");
   const [qrData, setQrData] = useState<string>("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const qrRef = useRef<HTMLDivElement>(null);
 
-  const handleDownload = () => {
-    const svg = qrRef.current?.querySelector("svg");
-    if (!svg) {
-      console.error("SVG element not found");
-      return;
+  const validateUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      console.error("Canvas context not available");
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => {
-      try {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-
-        const pngFile = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.download = `qr-code-${customId || "download"}.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      } catch (error) {
-        console.error("Error generating QR code image:", error);
-        setError("Failed to download QR code");
-      }
-    };
-
-    img.src =
-      "data:image/svg+xml;base64," +
-      btoa(unescape(encodeURIComponent(svgData)));
   };
+
+
+  const handleDownload = async () => {
+    const svg = qrRef.current?.querySelector("svg");
+    try {
+      await downloadQRCode(svg, `qr-code-${customId || "download"}`);
+      toast.success("QR Code downloaded successfully!");
+    } catch (error) {
+      console.error("Error downloading QR code:", error);
+      toast.error("Failed to download QR code");
+    }
+  };  
+
+    
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateUrl(url)) {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+
     setLoading(true);
-    setError("");
 
     try {
-      console.log("Making API request to:", "/qr/generate"); // Debug log
-
       const response = await axios.post("/qr/generate", {
         targetUrl: url,
         customIdentifier: customId || undefined,
       });
 
-      console.log("API Response:", response.data); // Debug log
+      const { qrCodeUrl, uniqueIdentifier } = response.data.data;
+      setQrData(qrCodeUrl);
+      toast.success("QR Code generated successfully!");
 
-      setQrData(response.data.data.qrCodeUrl);
-      setTimeout(
-        () => navigate(`/qr/${response.data.data.uniqueIdentifier}`),
-        2000
-      );
+      onSuccess?.(uniqueIdentifier);
+      setTimeout(() => navigate(`/qr/${uniqueIdentifier}`), 2000);
     } catch (err: any) {
-      console.error("API Error:", err); // Debug log
-
-      setError(err.response?.data?.message || "Failed to generate QR code");
+      const errorMessage = err.response?.data?.message || "Failed to generate QR code";
+      toast.error(errorMessage);
+      console.error("API Error:", err);
     } finally {
       setLoading(false);
     }
