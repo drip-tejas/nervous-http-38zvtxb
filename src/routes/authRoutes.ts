@@ -1,3 +1,5 @@
+// backend/src/routes/authRoutes.ts
+
 import express from "express";
 import { RequestHandler } from "express";
 import { register, login, getMe } from "../controllers/authController";

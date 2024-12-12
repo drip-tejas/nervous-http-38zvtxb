@@ -1,3 +1,5 @@
+// backend/src/components/auth.tsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
