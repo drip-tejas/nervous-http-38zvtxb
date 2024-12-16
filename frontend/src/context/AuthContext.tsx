@@ -7,6 +7,8 @@ import React, {
   useCallback,
 } from "react";
 import api from "../utils/axios";
+import toast from "react-hot-toast";
+
 
 // Define user type
 interface User {
@@ -19,7 +21,7 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (token: string) => void;
+  login: (token: string, refreshToken: string) => void;
   logout: () => void;
   isLoading: boolean; // Add loading state
 }
@@ -39,9 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  const fetchUserData = useCallback(async (token: string) => {
+  const fetchUserData = useCallback(async () => {
     try {
-      setIsLoading(true);
+      // setIsLoading(true);
       const { data } = await api.get("/auth/me");
       setUser(data);
       setIsAuthenticated(true);
@@ -54,23 +56,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = useCallback(
-    (token: string) => {
+    (token: string, refreshToken: string) => {
       localStorage.setItem("authToken", token);
-      fetchUserData(token);
+      localStorage.setItem("refreshToken", refreshToken);
+      fetchUserData();
     },
     [fetchUserData]
   );
 
   const logout = useCallback(() => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
     setUser(null);
     setIsAuthenticated(false);
   }, []);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      fetchUserData(storedToken);
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      fetchUserData();
     } else {
       setIsLoading(false);
     }
