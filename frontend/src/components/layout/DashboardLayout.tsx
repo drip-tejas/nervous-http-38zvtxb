@@ -1,11 +1,15 @@
 // /frontend/src/components/layout/DashboardLayout.tsx
 import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '../../context/AuthContext';
-import Spinner from '../ui/Spinner'; 
+import Spinner from '../ui/Spinner';
+import QRCodeList from '../../pages/QRCode/List';
+import QRCodeGeneration from '../QRCodeGeneration';
+import QRCodeDetails from '../../pages/QRCode/Details/QRCodeDetails';
+import AnalyticsDashboard from '../../pages/Analytics';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -17,6 +21,8 @@ const DashboardLayout = () => {
     navigate('/login');
   };
 
+  console.log("in dashboard")
+
   if (isLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
@@ -26,6 +32,7 @@ const DashboardLayout = () => {
   }
 
   return (
+
     <div className="flex h-screen bg-gray-50">
       <aside
         className={`
@@ -52,14 +59,25 @@ const DashboardLayout = () => {
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header 
+        <Header
           userName={user?.name || 'User'}
           userEmail={user?.email || ''}
           onLogout={handleLogout}
         />
 
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
-          <Outlet />
+          {/* <Outlet /> */}
+          <Routes>
+            {/* Dashboard */}
+            <Route path="" element={<QRCodeList />} />
+
+            {/* QR Code routes */}
+            <Route path="qr/create" element={<QRCodeGeneration />} />
+            <Route path="qr/:id" element={<QRCodeDetails />} />
+
+            {/* Analytics */}
+            <Route path="analytics" element={<AnalyticsDashboard />} />
+          </Routes>
         </main>
       </div>
     </div>

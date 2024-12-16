@@ -36,7 +36,7 @@ const QRCodeDetails = () => {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await axios.get(`/qr/${id}`);
+        const response = await axios.get(`/api/qr/${id}`);
         setDetails(response.data.data);
         setNewUrl(response.data.data.currentUrl);
       } catch (err: any) {
@@ -54,8 +54,8 @@ const QRCodeDetails = () => {
   const handleUrlUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.put(`/qr/${id}/url`, { newUrl });
-      const response = await axios.get(`/qr/${id}`);
+      await axios.put(`/api/qr/${id}/url`, { newUrl });
+      const response = await axios.get(`/api/qr/${id}`);
       setDetails(response.data.data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update URL");
@@ -71,7 +71,7 @@ const QRCodeDetails = () => {
     <div className="max-w-4xl mx-auto mt-10 p-6">
       <div className="mb-6">
         <Link
-          to="/qr"
+          to="/"
           className="flex items-center text-blue-600 hover:text-blue-800"
         >
           <ChevronLeft size={20} />

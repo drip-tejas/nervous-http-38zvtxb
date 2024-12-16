@@ -54,7 +54,7 @@ const QRCodeGeneration = ({ onSuccess }: QRCodeGenerationProps) => {
     setLoading(true);
 
     try {
-      const response = await axios.post("/qr/generate", {
+      const response = await axios.post("/api/qr/generate", {
         targetUrl: url,
         customIdentifier: customId || undefined,
       });
@@ -98,7 +98,7 @@ const QRCodeGeneration = ({ onSuccess }: QRCodeGenerationProps) => {
         )}
       </div>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {/* {error && <div className="text-red-500 mb-4">{error}</div>} */}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

@@ -8,7 +8,7 @@ channel = "stable-24_05"
 XDG_CONFIG_HOME = "/home/runner/.config"
 PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
 npm_config_prefix = "/home/runner/$REPL_SLUG/.config/npm/node_global"
-VITE_API_URL = "https://5f7b11a6-9337-412d-a3c9-5a3006630bbc-00-1zpaozgdp0loi.sisko.replit.dev"
+VITE_API_URL = "https://5f7b11a6-9337-412d-a3c9-5a3006630bbc-00-1zpaozgdp0loi.sisko.replit.dev:8000"
 
 [packager]
 language = "nodejs"

@@ -27,9 +27,9 @@ const QRCodeList = () => {
         console.log("Auth token:", localStorage.getItem("authToken"));
         console.log(
           "Trying to fetch QRs from:",
-          `${api.defaults.baseURL}/qr/list`
+          `${api.defaults.baseURL}/api/qr/list`
         );
-        const response = await api.get("/qr/list");
+        const response = await api.get("/api/qr/list");
         setCodes(response.data.data);
       } catch (err: any) {
         console.error("Error fetching codes:", err);

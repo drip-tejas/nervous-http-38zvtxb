@@ -14,8 +14,8 @@ const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data } = await api.post("/auth/login", { email, password });
-      login(data.token);
+      const { data } = await api.post("/api/auth/login", { email, password });
+      login(data.token,data.refreshToken);
       navigate("/");
     } catch (err) {
       setError("Invalid credentials");

@@ -19,7 +19,7 @@ const RegisterForm = () => {
     e.preventDefault();
     try {
       console.log("Submitting:", formData);
-      const { data } = await api.post("/auth/register", formData);
+      const { data } = await api.post("/api/auth/register", formData);
       console.log("Response:", data);
       login(data.token, data.refreshToken);
       navigate("/");
