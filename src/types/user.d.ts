@@ -5,6 +5,12 @@ export interface IUser {
   password: string;
   name: string;
   createdAt: Date;
+  updatedAt: Date;
+  refreshTokens?: string[];
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  addRefreshToken(token: string): Promise<void>;
+  removeRefreshToken(token: string): Promise<void>;
+  clearRefreshTokens(): Promise<void>;
 }
 
 declare global {
