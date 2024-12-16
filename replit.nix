@@ -1,6 +1,7 @@
-{pkgs}: {
+{ pkgs }: {
   deps = [
-    pkgs.nmh
-    pkgs.mongosh
+    pkgs.nodejs
+    pkgs.nodePackages.typescript
+    pkgs.nodePackages.typescript-language-server
   ];
 }

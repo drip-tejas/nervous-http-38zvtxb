@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import toast from 'react-hot-toast';
 
 /*
@@ -10,10 +10,11 @@ interface RefreshResponse {
 }
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'https://5f7b11a6-9337-412d-a3c9-5a3006630bbc-00-1zpaozgdp0loi.sisko.replit.dev/api',
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true
 });
 
 // Track if we're currently refreshing the token
@@ -73,7 +74,7 @@ api.interceptors.response.use(
       console.error("API Error:", {
         url: error.config?.url,
         status: error.response?.status,
-        message: error.response?.data?.message || error.message,
+        message: error.message,
       });
     }
 // Handle different error scenarios

@@ -1,14 +1,12 @@
 // src/index.ts
-
 import mongoose from "mongoose";
 import app from "./app";
 import dotenv from "dotenv";
 
 dotenv.config();
-
 mongoose.set("strictQuery", true);
 
-const port = process.env.PORT || 8000;
+const port = parseInt(process.env.PORT || '80', 10);
 const nodeEnv = process.env.NODE_ENV || "development";
 
 if (!process.env.MONGODB_URI) {
@@ -17,13 +15,12 @@ if (!process.env.MONGODB_URI) {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Start server function
 const startServer = async () => {
   try {
     await mongoose.connect(MONGODB_URI);
     console.log("MongoDB connected");
 
-    app.listen(port, () => {
+    app.listen(port, '0.0.0.0', () => {
       console.log(`Server running on port ${port} in ${nodeEnv} mode`);
     });
   } catch (error) {

@@ -1,7 +1,7 @@
 // /frontend/src/pages/QRCodeList.tsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import api from "../utils/axios";
+import api from "../../../utils/axios";
 
 interface QRCode {
   uniqueIdentifier: string;

@@ -6,10 +6,10 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import LoginForm from "./components/auth/LoginForm";
 import RegisterForm from "./components/auth/RegisterForm";
 import QRCodeGeneration from "./components/QRCodeGeneration";
-import QRCodeList from "./pages/QRCodeList";
-import QRCodeDetails from "./pages/QRCodeDetails";
+import QRCodeList from "./pages/QRCode/List/index";
+import QRCodeDetails from "./pages/QRCode/Details/QRCodeDetails";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import AnalyticsDashboard from "./pages/Analytics/index";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const App = () => {
@@ -18,6 +18,7 @@ const App = () => {
       <AuthProvider>
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<LoginForm />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
 

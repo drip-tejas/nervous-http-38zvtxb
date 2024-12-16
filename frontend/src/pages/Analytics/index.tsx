@@ -13,7 +13,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import axios from "../utils/axios";
+import axios from "../../utils/axios";
 
 interface AnalyticsData {
   totalScans: number;

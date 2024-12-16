@@ -17,7 +17,8 @@ const corsOrigin = process.env.CORS_ORIGIN || "*";
 // Middleware setup
 app.use(
   cors({
-    origin: corsOrigin,
+    // origin: corsOrigin,
+    origin: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -52,7 +53,11 @@ app.get("/test", async (_req, res) => {
 
 // API routes
 app.use("/api/auth", authRoutes);
+console.log("Auth routes mounted at /api/auth");
 app.use("/api/qr", qrRoutes);
+app.get("/test", (req, res) => {
+  res.json({ message: "Backend is running" });
+});
 
 // Global error handler
 const errorHandler: express.ErrorRequestHandler = (err, _req, res, _next) => {

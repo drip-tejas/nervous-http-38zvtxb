@@ -5,7 +5,7 @@ import QRCode from "react-qr-code";
 import { Download } from "lucide-react";
 import axios from "../utils/axios";
 import toast from "react-hot-toast"
-import { downloadQRCode } from "../utils/downloadQRCode";
+import { downloadQRCode } from "../utils/qrCodeUtils";
 
 interface QRCodeGenerationProps {
   onSuccess?: (identifier: string) => void;

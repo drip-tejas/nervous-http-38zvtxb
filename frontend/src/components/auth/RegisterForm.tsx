@@ -21,7 +21,7 @@ const RegisterForm = () => {
       console.log("Submitting:", formData);
       const { data } = await api.post("/auth/register", formData);
       console.log("Response:", data);
-      login(data.token);
+      login(data.token, data.refreshToken);
       navigate("/");
     } catch (err: any) {
       console.error("Registration error details:", {

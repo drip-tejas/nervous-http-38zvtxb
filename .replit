@@ -1,12 +1,40 @@
-modules = ["nodejs-16", "web"]
 run = "npm run dev"
+entrypoint = "src/main.tsx"
 
 [nix]
 channel = "stable-24_05"
 
-[deployment]
-run = ["sh", "-c", "npm run dev"]
+[env]
+XDG_CONFIG_HOME = "/home/runner/.config"
+PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
+npm_config_prefix = "/home/runner/$REPL_SLUG/.config/npm/node_global"
+VITE_API_URL = "https://5f7b11a6-9337-412d-a3c9-5a3006630bbc-00-1zpaozgdp0loi.sisko.replit.dev"
 
+[packager]
+language = "nodejs"
+
+[packager.features]
+packageSearch = true
+guessImports = true
+
+[languages.typescript]
+pattern = "**/{*.ts,*.tsx}"
+syntax = "typescript"
+
+[languages.typescript.languageServer]
+start = "typescript-language-server --stdio"
+
+[deployment]
+run = ["npm", "run", "preview"]
+build = ["npm", "run", "build"]
+deploymentTarget = "static"
+
+# Frontend port
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+# Backend port
 [[ports]]
 localPort = 8000
-externalPort = 80
+externalPort = 8000

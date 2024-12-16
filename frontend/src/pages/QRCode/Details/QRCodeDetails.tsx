@@ -1,7 +1,7 @@
 // /frontend/src/pages/QRCodeDetails.tsx
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "../utils/axios";
+import axios from "../../../utils/axios"
 import QRCode from "react-qr-code";
 import { ChevronLeft } from "lucide-react";
 

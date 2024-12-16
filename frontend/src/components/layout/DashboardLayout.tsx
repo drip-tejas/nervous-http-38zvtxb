@@ -5,7 +5,7 @@ import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '../../context/AuthContext';
-import Spinner from '../ui/Spinner'; // Import the Spinner we created earlier
+import Spinner from '../ui/Spinner'; 
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);

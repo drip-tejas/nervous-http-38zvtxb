@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { User, IUser } from "../models/User";
 
-// Define custom request interfaces
+// Define interfaces
 interface RegisterRequest extends Request {
   body: {
     email: string;
@@ -28,35 +28,35 @@ interface RefreshTokenRequest extends Request {
 interface AuthenticatedRequest extends Request {
   user?: IUser;
 }
+
 interface TokenPair {
   accessToken: string;
   refreshToken: string;
 }
 
-// Helper function to generate tokens
-const generateTokens = (userId: string) => {
+// Helper functions
+const generateTokens = (userId: string): TokenPair => {
   const accessToken = jwt.sign(
     { _id: userId },
     process.env.JWT_SECRET as string,
-    { expiresIn: "15m" }  // Short-lived access token
+    { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
     { _id: userId },
     process.env.JWT_REFRESH_SECRET as string,
-    { expiresIn: "7d" }   // Long-lived refresh token
+    { expiresIn: "7d" }
   );
 
   return { accessToken, refreshToken };
 };
 
-// Helper function to validate email
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Get current user
+// Controller functions
 export const getMe = async (
   req: AuthenticatedRequest,
   res: Response
@@ -77,7 +77,6 @@ export const getMe = async (
   }
 };
 
-// Register new user
 export const register = async (
   req: RegisterRequest,
   res: Response
@@ -98,13 +97,11 @@ export const register = async (
       return;
     }
 
-    // Email validation
     if (!isValidEmail(email)) {
       res.status(400).json({ error: "Invalid email format" });
       return;
     }
 
-    // Password validation
     if (password.length < 8) {
       res.status(400).json({ 
         error: "Password must be at least 8 characters long"
@@ -112,21 +109,17 @@ export const register = async (
       return;
     }
 
-    // Check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(400).json({ error: "Email already registered" });
       return;
     }
 
-    // Create new user
     const user = new User({ email, password, name });
     await user.save();
 
-    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id);
 
-    // Send response
     res.status(201).json({
       user: {
         _id: user._id,
@@ -149,7 +142,6 @@ export const register = async (
   }
 };
 
-// Login user
 export const login = async (
   req: LoginRequest,
   res: Response
@@ -158,29 +150,26 @@ export const login = async (
     const { email, password } = req.body;
     console.log("Login attempt for email:", email);
 
-    // Find user
     const user = await User.findOne({ email }).select('+password');
     console.log("User found:", user ? "Yes" : "No");
-    
+
     if (!user) {
       console.log("User not found for email:", email);
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
 
-    // Verify password
     const isMatch = await user.comparePassword(password);
     console.log("Password match:", isMatch ? "Yes" : "No");
+
     if (!isMatch) {
       console.log("Invalid password for user:", email);
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
 
-    // Generate new tokens
     const { accessToken, refreshToken } = generateTokens(user._id);
 
-    // Send response
     res.json({
       user: {
         _id: user._id,
@@ -196,7 +185,6 @@ export const login = async (
   }
 };
 
-// Refresh token
 export const refresh = async (
   req: RefreshTokenRequest,
   res: Response
@@ -209,20 +197,17 @@ export const refresh = async (
       return;
     }
 
-    // Verify refresh token
     const decoded = jwt.verify(
       refreshToken,
       process.env.JWT_REFRESH_SECRET as string
     ) as { _id: string };
 
-    // Find user
     const user = await User.findById(decoded._id);
     if (!user) {
       res.status(401).json({ error: "User not found" });
       return;
     }
 
-    // Generate new tokens
     const tokens = generateTokens(user._id);
 
     res.json({
@@ -235,14 +220,11 @@ export const refresh = async (
   }
 };
 
-// Logout
 export const logout = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
-    // Clear refresh tokens if you're storing them in DB
-    // await User.findByIdAndUpdate(req.user?._id, { $set: { refreshTokens: [] } });
     res.json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);

@@ -1,4 +1,4 @@
-import { Request } from "express";
+// backend/src/types/express.d.ts
 import { IUser } from "./user";
 
 declare global {
@@ -9,11 +9,4 @@ declare global {
   }
 }
 
-export type AuthRequest = Request & {
-  user: IUser;
-};
-
-export type RequestWithAuth<T = any> = AuthRequest & {
-  body: T;
-  params: Record<string, string>;
-};
+export {};
