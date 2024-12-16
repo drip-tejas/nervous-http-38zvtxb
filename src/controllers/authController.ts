@@ -28,6 +28,10 @@ interface RefreshTokenRequest extends Request {
 interface AuthenticatedRequest extends Request {
   user?: IUser;
 }
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
 
 // Helper function to generate tokens
 const generateTokens = (userId: string) => {
@@ -152,17 +156,23 @@ export const login = async (
 ): Promise<void> => {
   try {
     const { email, password } = req.body;
+    console.log("Login attempt for email:", email);
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
+    console.log("User found:", user ? "Yes" : "No");
+    
     if (!user) {
+      console.log("User not found for email:", email);
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
 
     // Verify password
     const isMatch = await user.comparePassword(password);
+    console.log("Password match:", isMatch ? "Yes" : "No");
     if (!isMatch) {
+      console.log("Invalid password for user:", email);
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }

@@ -61,7 +61,7 @@ const userSchema = new Schema({
 });
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
@@ -73,10 +73,18 @@ userSchema.pre("save", async function (next) {
 });
 
 // Password comparison method
-userSchema.methods.comparePassword = async function (
+userSchema.methods.comparePassword = async function(
   candidatePassword: string
 ): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    console.log("Comparing passwords for user:", this.email);
+    const isMatch = await bcrypt.compare(candidatePassword, this.password);
+    console.log("Password match result:", isMatch);
+    return isMatch;
+  } catch (error) {
+    console.error("Password comparison error:", error);
+    throw error;
+  }
 };
 
 // Add refresh token
