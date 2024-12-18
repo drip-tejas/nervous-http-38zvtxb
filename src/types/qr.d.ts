@@ -1,26 +1,4 @@
-/*
-import { Request, Response } from "express";
-import { IUser } from "./user";
-
-export interface GenerateQRBody {
-  targetUrl: string;
-  customIdentifier?: string;
-}
-
-export interface UpdateUrlBody {
-  newUrl: string;
-}
-
-export interface AuthenticatedRequest extends Request {
-  user: IUser;
-}
-
-export type QRController = (
-  req: AuthenticatedRequest,
-  res: Response
-) => Promise<void>;
-*/
-
+// src/types/qr.d.ts
 import { RequestHandler } from "express";
 import { IUser } from "./user";
 
