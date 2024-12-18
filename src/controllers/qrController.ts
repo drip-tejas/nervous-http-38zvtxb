@@ -27,16 +27,23 @@ export const generateQRCode: QRAuthHandler = async (req, res) => {
     }
 
     const validUrl = validateUrl(targetUrl);
-    const redirectUrl = `${process.env.BASE_URL}/api/qr/redirect/${
-      customIdentifier || ""
+
+    // Create a unique identifier if none provided
+    const identifier = customIdentifier || Math.random().toString(36).substr(2, 9);
+
+    // Create the redirect URL using the server's base URL
+    const redirectUrl = `${process.env.VITE_API_URL}/api/qr/redirect/${
+      identifier || ""
     }`;
+
+    // Generate QR code with the redirect URL, not the target URL
     const qrDataUrl = await qrcode.toDataURL(redirectUrl);
 
     const qrCode = await QRCode.create({
       user: req.user._id,
       targetUrl: validUrl,
       currentUrl: validUrl,
-      customIdentifier,
+      customIdentifier: identifier,
       urlHistory: [{ url: validUrl, changedAt: new Date() }],
     });
 
@@ -46,6 +53,7 @@ export const generateQRCode: QRAuthHandler = async (req, res) => {
         qrCodeUrl: qrDataUrl,
         uniqueIdentifier: qrCode.uniqueIdentifier,
         targetUrl: validUrl,
+        redirectUrl: redirectUrl
       },
     });
   } catch (error) {
@@ -64,6 +72,9 @@ export const generateQRCode: QRAuthHandler = async (req, res) => {
 export const redirectAndTrackScan: QRAuthHandler = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("Scanning QR code with ID:", id);
+
+    
     const qrCode = await QRCode.findOne({
       $or: [{ uniqueIdentifier: id }, { customIdentifier: id }],
     });
@@ -73,15 +84,35 @@ export const redirectAndTrackScan: QRAuthHandler = async (req, res) => {
       return;
     }
 
-    qrCode.scans.push({
-      timestamp: new Date(),
-      ipAddress: req.ip || "",
-      deviceInfo: req.get("User-Agent") || "Unknown",
-    });
+    // Get IP and location info
+    const ipAddress = (req.ip || req.connection.remoteAddress || "0.0.0.0").replace(/^::ffff:/, "");
+    const userAgent = req.headers["user-agent"] || "Unknown";
+    const deviceInfo = parseUserAgent(userAgent);
 
-    await qrCode.save();
+    const location = await getLocationFromIP(ipAddress);
+
+    console.log("Recording scan with data:", {
+      ipAddress,
+      deviceInfo,
+      location,
+    });
+    
+    // Record the scan
+    await QRCode.findByIdAndUpdate(qrCode._id, {
+      $push: {
+        scans: {
+          timestamp: new Date(),
+          ipAddress,
+          deviceInfo,
+          location,
+        }
+      }
+    });
+    console.log("Redirecting to:", qrCode.currentUrl);
+
     res.redirect(qrCode.currentUrl);
   } catch (error) {
+    console.error("Redirect Error:", error);
     res.status(500).json({ success: false, message: "Redirect failed" });
   }
 };
